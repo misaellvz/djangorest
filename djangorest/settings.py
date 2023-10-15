@@ -9,11 +9,15 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
 
 from pathlib import Path
+from decouple import config as env  # type: ignore
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "product.apps.ProductConfig",
 ]
 
 MIDDLEWARE = [
@@ -74,11 +79,20 @@ WSGI_APPLICATION = "djangorest.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+dbtype = str(env("DATABASE_TYPE", "sqlite3"))
+dbname = (
+    str(env("DATABASE_NAME")) if env("DATABASE_NAME", None) else BASE_DIR / "db.sqlite3"
+)
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+        "ENGINE": f"django.db.backends.{dbtype}",
+        "NAME": dbname,
+        "USER": str(env("DATABASE_USER", "test")),
+        "PASSWORD": str(env("DATABASE_PASS", "test")),
+        "HOST": str(env("DATABASE_HOST", "localhost")),
+        "PORT": str(env("DATABASE_PORT", "")),
+    },
 }
 
 
@@ -129,5 +143,7 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
 }
